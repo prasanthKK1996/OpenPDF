@@ -117,7 +117,7 @@ public class PdfEncryption {
     byte[] extra = new byte[5];
 
     /** The message digest algorithm sha256 */
-    MessageDigest sha256;
+    MessageDigest sha512;
 
     /**
      * The encryption key for the owner
@@ -164,7 +164,7 @@ public class PdfEncryption {
 
     public PdfEncryption() {
         try {
-            sha256 = MessageDigest.getInstance("SHA-256");
+            sha512 = MessageDigest.getInstance("SHA-512");
         } catch (Exception e) {
             throw new ExceptionConverter(e);
         }
@@ -269,12 +269,12 @@ public class PdfEncryption {
     private byte[] computeOwnerKey(byte[] userPad, byte[] ownerPad) {
         byte[] ownerKey = new byte[32];
 
-        byte[] digest = sha256.digest(ownerPad);
+        byte[] digest = sha512.digest(ownerPad);
         if (revision == STANDARD_ENCRYPTION_128 || revision == AES_128) {
             byte[] mkey = new byte[keyLength / 8];
             // only use for the input as many bit as the key consists of
             for (int k = 0; k < 50; ++k)
-                System.arraycopy(sha256.digest(digest), 0, digest, 0, mkey.length);
+                System.arraycopy(sha512.digest(digest), 0, digest, 0, mkey.length);
             System.arraycopy(userPad, 0, ownerKey, 0, 32);
             for (int i = 0; i < 20; ++i) {
                 for (int j = 0; j < mkey.length; ++j)
@@ -303,28 +303,28 @@ public class PdfEncryption {
         mkey = new byte[keyLength / 8];
 
         // fixed by ujihara in order to follow PDF reference
-        sha256.reset();
-        sha256.update(userPad);
-        sha256.update(ownerKey);
+        sha512.reset();
+        sha512.update(userPad);
+        sha512.update(ownerKey);
 
         byte[] ext = new byte[4];
         ext[0] = (byte) permissions;
         ext[1] = (byte) (permissions >> 8);
         ext[2] = (byte) (permissions >> 16);
         ext[3] = (byte) (permissions >> 24);
-        sha256.update(ext, 0, 4);
+        sha512.update(ext, 0, 4);
         if (documentID != null)
-            sha256.update(documentID);
+            sha512.update(documentID);
         if (!encryptMetadata)
-            sha256.update(metadataPad);
+            sha512.update(metadataPad);
 
         byte[] digest = new byte[mkey.length];
-        System.arraycopy(sha256.digest(), 0, digest, 0, mkey.length);
+        System.arraycopy(sha512.digest(), 0, digest, 0, mkey.length);
 
         // only use the really needed bits as input for the hash
         if (revision == STANDARD_ENCRYPTION_128 || revision == AES_128) {
             for (int k = 0; k < 50; ++k)
-                System.arraycopy(sha256.digest(digest), 0, digest, 0, mkey.length);
+                System.arraycopy(sha512.digest(digest), 0, digest, 0, mkey.length);
         }
 
         System.arraycopy(digest, 0, mkey, 0, mkey.length);
@@ -337,8 +337,8 @@ public class PdfEncryption {
     // use the revision to choose the setup method
     private void setupUserKey() {
         if (revision == STANDARD_ENCRYPTION_128 || revision == AES_128) {
-            sha256.update(pad);
-            byte[] digest = sha256.digest(documentID);
+            sha512.update(pad);
+            byte[] digest = sha512.digest(documentID);
             System.arraycopy(digest, 0, userKey, 0, 16);
             for (int k = 16; k < 32; ++k)
                 userKey[k] = 0;
@@ -359,7 +359,7 @@ public class PdfEncryption {
     public void setupAllKeys(byte[] userPassword, byte[] ownerPassword,
                              int permissions) {
         if (ownerPassword == null || ownerPassword.length == 0)
-            ownerPassword = sha256.digest(createDocumentId());
+            ownerPassword = sha512.digest(createDocumentId());
         permissions |= (revision == STANDARD_ENCRYPTION_128 || revision == AES_128 || revision == AES_256_V3) ? 0xfffff0c0
                 : 0xffffffc0;
         permissions &= 0xfffffffc;
@@ -388,16 +388,16 @@ public class PdfEncryption {
     }
 
     public static byte[] createDocumentId() {
-        MessageDigest sha256;
+        MessageDigest sha512;
         try {
-            sha256 = MessageDigest.getInstance("SHA-256");
+            sha512 = MessageDigest.getInstance("SHA-512");
         } catch (Exception e) {
             throw new ExceptionConverter(e);
         }
         long time = System.currentTimeMillis();
         long mem = Runtime.getRuntime().freeMemory();
         String s = time + "+" + mem + "+" + (seq++);
-        return sha256.digest(s.getBytes());
+        return sha512.digest(s.getBytes());
     }
 
     /**
@@ -454,17 +454,17 @@ public class PdfEncryption {
         if (revision >= AES_256_V3)
             return;
 
-        sha256.reset(); // added by ujihara
+        sha512.reset(); // added by ujihara
         extra[0] = (byte) number;
         extra[1] = (byte) (number >> 8);
         extra[2] = (byte) (number >> 16);
         extra[3] = (byte) generation;
         extra[4] = (byte) (generation >> 8);
-        sha256.update(mkey);
-        sha256.update(extra);
+        sha512.update(mkey);
+        sha512.update(extra);
         if (revision == AES_128)
-            sha256.update(salt);
-        key = sha256.digest();
+            sha512.update(salt);
+        key = sha512.digest();
         keySize = mkey.length + 5;
         if (keySize > 16)
             keySize = 16;
