@@ -80,6 +80,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Encoding;
@@ -111,8 +112,8 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 import org.bouncycastle.cert.ocsp.CertificateID;
 import org.bouncycastle.cert.ocsp.SingleResp;
-import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
-import org.bouncycastle.jce.provider.X509CRLParser;
+//import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
+//import org.bouncycastle.jce.provider.X509CRLParser;
 import org.bouncycastle.operator.DigestCalculatorProvider;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.tsp.TimeStampToken;
@@ -120,6 +121,7 @@ import org.bouncycastle.tsp.TimeStampTokenInfo;
 
 import com.lowagie.text.ExceptionConverter;
 import com.lowagie.text.error_messages.MessageLocalization;
+import sun.security.provider.X509Factory;
 
 /**
  * This class does all the processing related to signing and verifying a PKCS#7
@@ -320,8 +322,8 @@ public class PdfPKCS7 {
     public PdfPKCS7(byte[] contentsKey, byte[] certsKey, String provider) {
         try {
             this.provider = provider;
-            CertificateFactory certificateFactory = new CertificateFactory();
-            Collection<Certificate> certificates = certificateFactory.engineGenerateCertificates(new ByteArrayInputStream(certsKey));
+            X509Factory certificateFactory = new X509Factory();
+            Collection<Certificate> certificates = (Collection<Certificate>) certificateFactory.engineGenerateCertificates(new ByteArrayInputStream(certsKey));
             certs = new ArrayList<>(certificates);
             signCerts = certs;
             signCert = (X509Certificate) certs.iterator().next();
@@ -443,12 +445,12 @@ public class PdfPKCS7 {
             }
 
             // the certificates and crls
-            CertificateFactory certificateFactory = new CertificateFactory();
-            Collection<Certificate> certificates = certificateFactory.engineGenerateCertificates(new ByteArrayInputStream(contentsKey));
+            X509Factory certificateFactory = new X509Factory();
+            Collection<Certificate> certificates = (Collection<Certificate>) certificateFactory.engineGenerateCertificates(new ByteArrayInputStream(contentsKey));
             this.certs = new ArrayList<>(certificates);
-            X509CRLParser cl = new X509CRLParser();
-            cl.engineInit(new ByteArrayInputStream(contentsKey));
-            crls = (List<CRL>) cl.engineReadAll();
+            //X509CRLParser cl = new X509CRLParser();
+            //cl.engineInit(new ByteArrayInputStream(contentsKey));
+            crls = new ArrayList<>();//(List<CRL>) cl.engineReadAll();
 
             // the possible ID_PKCS7_DATA
             ASN1Sequence rsaData = (ASN1Sequence) content.getObjectAt(2);
@@ -1170,7 +1172,7 @@ public class PdfPKCS7 {
                 digest = sig.sign();
             ByteArrayOutputStream bOut = new ByteArrayOutputStream();
 
-            ASN1OutputStream dout = ASN1OutputStream.create(bOut);
+            ASN1OutputStream dout = new DEROutputStream(bOut);
             dout.writeObject(new DEROctetString(digest));
             dout.close();
 
@@ -1353,7 +1355,7 @@ public class PdfPKCS7 {
 
             ByteArrayOutputStream bOut = new ByteArrayOutputStream();
 
-            ASN1OutputStream dout = ASN1OutputStream.create(bOut);
+            ASN1OutputStream dout = new DEROutputStream(bOut);
             dout.writeObject(new DERSequence(whole));
             dout.close();
 
@@ -1882,4 +1884,6 @@ public class PdfPKCS7 {
             return buf.toString().trim();
         }
     }
+
+
 }

@@ -180,7 +180,7 @@ public class OcspClientBouncyCastle implements OcspClient {
       BigInteger serialNumber) throws OCSPException, IOException,
       OperatorCreationException, CertificateEncodingException {
     // Add provider BC
-    Provider prov = new org.bouncycastle.jce.provider.BouncyCastleProvider();
+    Provider prov = new org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider();
     Security.addProvider(prov);
 
     // Generate the id for the certificate we are looking for

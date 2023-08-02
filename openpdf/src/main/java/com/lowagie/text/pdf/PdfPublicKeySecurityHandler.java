@@ -105,7 +105,7 @@ import java.util.List;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OutputStream;
@@ -208,7 +208,7 @@ public class PdfPublicKeySecurityHandler {
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-    final ASN1OutputStream derOutputStream = ASN1OutputStream.create(baos, ASN1Encoding.DER);
+    final ASN1OutputStream derOutputStream = new DEROutputStream(baos);
 
     derOutputStream.writeObject(obj);
 

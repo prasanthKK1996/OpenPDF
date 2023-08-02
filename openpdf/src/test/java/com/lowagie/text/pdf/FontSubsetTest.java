@@ -4,7 +4,7 @@ import com.lowagie.text.Document;
 import com.lowagie.text.Font;
 import com.lowagie.text.Paragraph;
 import org.apache.commons.io.IOUtils;
-import org.bouncycastle.crypto.prng.FixedSecureRandom;
+import org.bouncycastle.util.test.FixedSecureRandom;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -29,17 +29,18 @@ public class FontSubsetTest {
 
         byte[] baseSeed = new SecureRandom().generateSeed(512);
         // init deterministic SecureRandom with a custom base seed
-        SecureRandom secureRandom = new FixedSecureRandom(baseSeed);
+
+        SecureRandom secureRandom = new SecureRandom(baseSeed);
         font.setSecureRandom(secureRandom);
         assertNotEquals(font.createSubsetPrefix(), font.createSubsetPrefix()); // still different, as FixedSecureRandom generates a new random on each step
 
-        SecureRandom secureRandomOne = new FixedSecureRandom(baseSeed);
+        SecureRandom secureRandomOne = new SecureRandom(baseSeed);
         font.setSecureRandom(secureRandomOne);
 
         String subsetPrefixOne = font.createSubsetPrefix();
 
         // re-init FixedSecureRandom for deterministic generation
-        SecureRandom secureRandomTwo = new FixedSecureRandom(baseSeed);
+        SecureRandom secureRandomTwo = new SecureRandom(baseSeed);
         font.setSecureRandom(secureRandomTwo);
 
         String subsetPrefixTwo = font.createSubsetPrefix();

@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.security.Security;
 import java.util.List;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +25,7 @@ public class AcroFieldsTest {
     @Test
     public void testGetSignatures() throws Exception {
         // for algorithm SHA256 (without dash)
-        Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new BouncyCastleFipsProvider());
         InputStream moddedFile = AcroFieldsTest.class.getResourceAsStream("/siwa.pdf");
         PdfReader reader = new PdfReader(moddedFile);
         Document document = new Document(PageSize.A4);

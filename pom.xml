@@ -77,6 +77,8 @@
 
         <!-- dependencies -->
         <bouncycastle.version>1.73</bouncycastle.version>
+        <fips.bouncycastle.version>1.0.2.3</fips.bouncycastle.version>
+        <fips.bcpkix.version>1.0.7</fips.bcpkix.version>
         <commons-io.version>2.11.0</commons-io.version>
         <dom4j.version>2.1.3</dom4j.version>
         <fop.version>2.8</fop.version>
@@ -102,13 +104,13 @@
         <dependencies>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
-                <artifactId>bcprov-jdk18on</artifactId>
-                <version>${bouncycastle.version}</version>
+                <artifactId>bc-fips</artifactId>
+                <version>${fips.bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
-                <artifactId>bcpkix-jdk18on</artifactId>
-                <version>${bouncycastle.version}</version>
+                <artifactId>bcpkix-fips</artifactId>
+                <version>${fips.bcpkix.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
@@ -322,6 +324,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
@@ -375,8 +380,8 @@
                     <!--Need this because dep is optional and pitest can't find classes-->
                     <dependency>
                         <groupId>org.bouncycastle</groupId>
-                        <artifactId>bcprov-jdk18on</artifactId>
-                        <version>${bouncycastle.version}</version>
+                        <artifactId>bc-fips</artifactId>
+                        <version>${fips.bouncycastle.version}</version>
                     </dependency>
                 </dependencies>
                 <configuration>

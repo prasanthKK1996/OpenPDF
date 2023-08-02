@@ -48,12 +48,12 @@
  */
 package com.lowagie.text.pdf.crypto;
 
-import org.bouncycastle.crypto.BlockCipher;
-import org.bouncycastle.crypto.engines.AESEngine;
-import org.bouncycastle.crypto.modes.CBCBlockCipher;
-import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.bouncycastle.crypto.internal.BlockCipher;
+import org.bouncycastle.crypto.internal.modes.CBCBlockCipher;
+import org.bouncycastle.crypto.internal.paddings.PaddedBufferedBlockCipher;
+import org.bouncycastle.crypto.internal.params.KeyParameter;
+import org.bouncycastle.crypto.internal.params.KeyParameterImpl;
+import org.bouncycastle.crypto.internal.params.ParametersWithIV;
 
 /**
  * Creates an AES Cipher with CBC and padding PKCS5/7.
@@ -68,10 +68,11 @@ public class AESCipher {
    * @param iv            An initialization vector
    * @param key           Bytes for key*/
   public AESCipher(boolean forEncryption, byte[] key, byte[] iv) {
+
     BlockCipher aes = new AESEngine();
     BlockCipher cbc = new CBCBlockCipher(aes);
     bp = new PaddedBufferedBlockCipher(cbc);
-    KeyParameter kp = new KeyParameter(key);
+    KeyParameter kp = new KeyParameterImpl(key);
     ParametersWithIV piv = new ParametersWithIV(kp, iv);
     bp.init(forEncryption, piv);
   }
