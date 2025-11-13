@@ -49,10 +49,6 @@
 
 package com.lowagie.text.pdf;
 
-import com.lowagie.text.ExceptionConverter;
-import com.lowagie.text.error_messages.MessageLocalization;
-import com.lowagie.text.pdf.crypto.ARCFOUREncryption;
-import com.lowagie.text.pdf.crypto.IVGenerator;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -61,9 +57,15 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.cert.Certificate;
 import java.util.Arrays;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import com.lowagie.text.ExceptionConverter;
+import com.lowagie.text.error_messages.MessageLocalization;
+import com.lowagie.text.pdf.crypto.ARCFOUREncryption;
+import com.lowagie.text.pdf.crypto.IVGenerator;
 
 
 /**
@@ -115,7 +117,7 @@ public class PdfEncryption {
      */
     byte[] extra = new byte[5];
     /**
-     * The message digest algorithm MD5
+     * The message digest algorithm (MD5 for legacy, SHA-256 for FIPS)
      */
     MessageDigest md5;
     /**
@@ -156,7 +158,9 @@ public class PdfEncryption {
 
     public PdfEncryption() {
         try {
-            md5 = MessageDigest.getInstance("MD5");
+            // Use SHA-256 in FIPS mode, MD5 for legacy compatibility
+            String hashAlgorithm = FipsMode.isFipsMode() ? "SHA-256" : "MD5";
+            md5 = MessageDigest.getInstance(hashAlgorithm);
         } catch (Exception e) {
             throw new ExceptionConverter(e);
         }
@@ -195,16 +199,25 @@ public class PdfEncryption {
     }
 
     public static byte[] createDocumentId() {
-        MessageDigest md5;
+        MessageDigest md;
         try {
-            md5 = MessageDigest.getInstance("MD5");
+            // Use SHA-256 in FIPS mode for document ID generation
+            String hashAlgorithm = FipsMode.getDocumentIdHashAlgorithm();
+            md = MessageDigest.getInstance(hashAlgorithm);
         } catch (Exception e) {
             throw new ExceptionConverter(e);
         }
         long time = System.currentTimeMillis();
         long mem = Runtime.getRuntime().freeMemory();
         String s = time + "+" + mem + "+" + (seq++);
-        return md5.digest(s.getBytes());
+        byte[] digest = md.digest(s.getBytes());
+        // Return first 16 bytes to match PDF spec document ID length
+        if (digest.length > 16) {
+            byte[] trimmed = new byte[16];
+            System.arraycopy(digest, 0, trimmed, 0, 16);
+            return trimmed;
+        }
+        return digest;
     }
 
     public static PdfObject createInfoId(byte[] id) {
@@ -624,7 +637,9 @@ public class PdfEncryption {
             byte[] encodedRecipient = null;
 
             try {
-                md = MessageDigest.getInstance("SHA-1");
+                // Use SHA-256 in FIPS mode
+                String hashAlgorithm = FipsMode.getSignatureHashAlgorithm();
+                md = MessageDigest.getInstance(hashAlgorithm);
                 md.update(publicKeyHandler.getSeed());
                 for (int i = 0; i < publicKeyHandler.getRecipientsSize(); i++) {
                     encodedRecipient = publicKeyHandler.getEncodedRecipient(i);

@@ -50,15 +50,16 @@
  */
 package com.lowagie.text.pdf;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.ExceptionConverter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.ExceptionConverter;
 
 
 /**
@@ -150,11 +151,13 @@ public class PdfSmartCopy extends PdfCopy {
         private final int MAX_LEVELS = 100;
         private byte[] b;
         private int hash;
-        private MessageDigest md5;
+        private MessageDigest md;
 
         ByteStore(PRStream str) throws IOException {
             try {
-                md5 = MessageDigest.getInstance("MD5");
+                // Use SHA-256 in FIPS mode for content hashing
+                String hashAlgorithm = FipsMode.isFipsMode() ? "SHA-256" : "MD5";
+                md = MessageDigest.getInstance(hashAlgorithm);
             } catch (Exception e) {
                 throw new ExceptionConverter(e);
             }
@@ -162,7 +165,7 @@ public class PdfSmartCopy extends PdfCopy {
             int level = MAX_LEVELS;
             serObject(str, level, bb);
             this.b = bb.toByteArray();
-            md5 = null;
+            md = null;
         }
 
         private void serObject(PdfObject obj, int level, ByteBuffer bb) throws IOException {
@@ -177,8 +180,8 @@ public class PdfSmartCopy extends PdfCopy {
             if (obj.isStream()) {
                 bb.append("$B");
                 serDic((PdfDictionary) obj, level - 1, bb);
-                md5.reset();
-                bb.append(md5.digest(PdfReader.getStreamBytesRaw((PRStream) obj)));
+                md.reset();
+                bb.append(md.digest(PdfReader.getStreamBytesRaw((PRStream) obj)));
             } else if (obj.isDictionary()) {
                 serDic((PdfDictionary) obj, level - 1, bb);
             } else if (obj.isArray()) {

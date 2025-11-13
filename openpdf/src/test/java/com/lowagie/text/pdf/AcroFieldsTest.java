@@ -1,17 +1,18 @@
 package com.lowagie.text.pdf;
 
-import static java.time.Duration.ofMillis;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
-
-import com.lowagie.text.Document;
-import com.lowagie.text.PageSize;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.security.Security;
+import static java.time.Duration.ofMillis;
 import java.util.List;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.junit.jupiter.api.Assertions;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import org.junit.jupiter.api.Test;
+
+import com.lowagie.text.Document;
+import com.lowagie.text.PageSize;
 
 public class AcroFieldsTest {
 
@@ -23,7 +24,7 @@ public class AcroFieldsTest {
     @Test
     public void testGetSignatures() throws Exception {
         // for algorithm SHA256 (without dash)
-        Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new BouncyCastleFipsProvider());
         InputStream moddedFile = AcroFieldsTest.class.getResourceAsStream("/siwa.pdf");
         PdfReader reader = new PdfReader(moddedFile);
         Document document = new Document(PageSize.A4);

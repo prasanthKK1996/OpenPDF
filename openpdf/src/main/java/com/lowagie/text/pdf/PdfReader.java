@@ -1602,7 +1602,9 @@ public class PdfReader implements PdfViewerPreferences, Closeable {
             MessageDigest md;
 
             try {
-                md = MessageDigest.getInstance("SHA-1");
+                // Use SHA-256 in FIPS mode
+                String hashAlgorithm = FipsMode.getSignatureHashAlgorithm();
+                md = MessageDigest.getInstance(hashAlgorithm);
                 md.update(envelopedData, 0, 20);
                 for (int i = 0; i < recipients.size(); i++) {
                     byte[] encodedRecipient = recipients.getPdfObject(i).getBytes();

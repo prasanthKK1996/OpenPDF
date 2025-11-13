@@ -52,6 +52,8 @@ package com.lowagie.text;
 import java.net.URL;
 import java.security.MessageDigest;
 
+import com.lowagie.text.pdf.FipsMode;
+
 /**
  * Support for JBIG2 images.
  *
@@ -109,7 +111,9 @@ public class ImgJBIG2 extends Image {
             this.global = globals;
             MessageDigest md;
             try {
-                md = MessageDigest.getInstance("MD5");
+                // Use SHA-256 in FIPS mode for image hashing
+                String hashAlgorithm = FipsMode.isFipsMode() ? "SHA-256" : "MD5";
+                md = MessageDigest.getInstance(hashAlgorithm);
                 md.update(this.global);
                 this.globalHash = md.digest();
             } catch (Exception e) {

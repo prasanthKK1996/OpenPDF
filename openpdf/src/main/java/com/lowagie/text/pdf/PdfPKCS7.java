@@ -114,8 +114,6 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 import org.bouncycastle.cert.ocsp.CertificateID;
 import org.bouncycastle.cert.ocsp.SingleResp;
-import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
-import org.bouncycastle.jce.provider.X509CRLParser;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DigestCalculatorProvider;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
@@ -312,8 +310,13 @@ public class PdfPKCS7 {
     public PdfPKCS7(byte[] contentsKey, byte[] certsKey, String provider) {
         try {
             this.provider = provider;
-            CertificateFactory certificateFactory = new CertificateFactory();
-            Collection<Certificate> certificates = certificateFactory.engineGenerateCertificates(
+            java.security.cert.CertificateFactory certificateFactory;
+            if (provider == null) {
+                certificateFactory = java.security.cert.CertificateFactory.getInstance("X.509");
+            } else {
+                certificateFactory = java.security.cert.CertificateFactory.getInstance("X.509", provider);
+            }
+            Collection<? extends Certificate> certificates = certificateFactory.generateCertificates(
                     new ByteArrayInputStream(certsKey));
             certs = new ArrayList<>(certificates);
             signCerts = certs;
@@ -371,7 +374,7 @@ public class PdfPKCS7 {
                                 .getComposedMessage("not.a.valid.pkcs.7.object.not.signed.data"));
             }
             ASN1Sequence content = (ASN1Sequence) ((ASN1TaggedObject) signedData.getObjectAt(
-                    1)).getBaseObject();            // the positions that we care are:
+                    1)).getObject();            // the positions that we care are:
             // the positions that we care are:
             // 0 - version
             // 1 - digestAlgorithms
@@ -392,19 +395,31 @@ public class PdfPKCS7 {
             }
 
             // the certificates and crls
-            CertificateFactory certificateFactory = new CertificateFactory();
-            Collection<Certificate> certificates = certificateFactory.engineGenerateCertificates(
+            java.security.cert.CertificateFactory certificateFactory;
+            if (provider == null) {
+                certificateFactory = java.security.cert.CertificateFactory.getInstance("X.509");
+            } else {
+                certificateFactory = java.security.cert.CertificateFactory.getInstance("X.509", provider);
+            }
+            Collection<? extends Certificate> certificates = certificateFactory.generateCertificates(
                     new ByteArrayInputStream(contentsKey));
             this.certs = new ArrayList<>(certificates);
-            X509CRLParser cl = new X509CRLParser();
-            cl.engineInit(new ByteArrayInputStream(contentsKey));
-            crls = (List<CRL>) cl.engineReadAll();
+            
+            // Parse CRLs using standard JCA
+            crls = new ArrayList<>();
+            try {
+                Collection<? extends CRL> parsedCrls = certificateFactory.generateCRLs(
+                        new ByteArrayInputStream(contentsKey));
+                crls.addAll(parsedCrls);
+            } catch (Exception crlEx) {
+                // CRLs may not be present, that's okay
+            }
 
             // the possible ID_PKCS7_DATA
             ASN1Sequence rsaData = (ASN1Sequence) content.getObjectAt(2);
             if (rsaData.size() > 1) {
                 ASN1OctetString rsaDataContent = (ASN1OctetString) ((ASN1TaggedObject) rsaData.getObjectAt(
-                        1)).getBaseObject();
+                        1)).getObject();
                 RSAdata = rsaDataContent.getOctets();
             }
 
@@ -473,7 +488,7 @@ public class PdfPKCS7 {
                             if (tg.getTagNo() != 1) {
                                 continue;
                             }
-                            ASN1Sequence seqin = (ASN1Sequence) tg.getBaseObject();
+                            ASN1Sequence seqin = (ASN1Sequence) tg.getObject();
                             findOcsp(seqin);
                         }
                     }
@@ -988,8 +1003,8 @@ public class PdfPKCS7 {
                 }
                 if (seq.getObjectAt(k) instanceof ASN1TaggedObject) {
                     ASN1TaggedObject tag = (ASN1TaggedObject) seq.getObjectAt(k);
-                    if (tag.getBaseObject() instanceof ASN1Sequence) {
-                        seq = (ASN1Sequence) tag.getBaseObject();
+                    if (tag.getObject() instanceof ASN1Sequence) {
+                        seq = (ASN1Sequence) tag.getObject();
                         ret = false;
                         break;
                     } else {

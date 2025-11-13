@@ -48,12 +48,11 @@
  */
 package com.lowagie.text.pdf.crypto;
 
-import org.bouncycastle.crypto.BlockCipher;
-import org.bouncycastle.crypto.engines.AESEngine;
-import org.bouncycastle.crypto.modes.CBCBlockCipher;
-import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.params.ParametersWithIV;
+import java.security.Security;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Creates an AES Cipher with CBC and padding PKCS5/7.
@@ -62,7 +61,7 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
  */
 public class AESCipher {
 
-    private final PaddedBufferedBlockCipher bp;
+    private final Cipher cipher;
 
     /**
      * Creates a new instance of AESCipher
@@ -72,39 +71,36 @@ public class AESCipher {
      * @param key           Bytes for key
      */
     public AESCipher(boolean forEncryption, byte[] key, byte[] iv) {
-        BlockCipher aes = new AESEngine();
-        BlockCipher cbc = new CBCBlockCipher(aes);
-        bp = new PaddedBufferedBlockCipher(cbc);
-        KeyParameter kp = new KeyParameter(key);
-        ParametersWithIV piv = new ParametersWithIV(kp, iv);
-        bp.init(forEncryption, piv);
+        try {
+            // Use standard JCA with BCFIPS provider
+            if (Security.getProvider("BCFIPS") == null) {
+                Security.addProvider(new org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider());
+            }
+            
+            SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BCFIPS");
+            
+            int mode = forEncryption ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE;
+            cipher.init(mode, keySpec, ivSpec);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize AES cipher", e);
+        }
     }
 
     public byte[] update(byte[] inp, int inpOff, int inpLen) {
-        int neededLen = bp.getUpdateOutputSize(inpLen);
-        byte[] outp = null;
-        if (neededLen > 0) {
-            outp = new byte[neededLen];
+        try {
+            return cipher.update(inp, inpOff, inpLen);
+        } catch (Exception ex) {
+            return new byte[0];
         }
-        bp.processBytes(inp, inpOff, inpLen, outp, 0);
-        return outp;
     }
 
     public byte[] doFinal() {
-        int neededLen = bp.getOutputSize(0);
-        byte[] outp = new byte[neededLen];
-        int n;
         try {
-            n = bp.doFinal(outp, 0);
+            return cipher.doFinal();
         } catch (Exception ex) {
-            return outp;
-        }
-        if (n != outp.length) {
-            byte[] outp2 = new byte[n];
-            System.arraycopy(outp, 0, outp2, 0, n);
-            return outp2;
-        } else {
-            return outp;
+            return new byte[0];
         }
     }
 

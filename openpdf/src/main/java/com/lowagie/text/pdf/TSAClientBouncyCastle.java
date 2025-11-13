@@ -49,7 +49,6 @@
 
 package com.lowagie.text.pdf;
 
-import com.lowagie.text.error_messages.MessageLocalization;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -60,6 +59,7 @@ import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.util.Base64;
+
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.cmp.PKIFailureInfo;
 import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
@@ -68,6 +68,8 @@ import org.bouncycastle.tsp.TimeStampRequestGenerator;
 import org.bouncycastle.tsp.TimeStampResponse;
 import org.bouncycastle.tsp.TimeStampToken;
 import org.bouncycastle.tsp.TimeStampTokenInfo;
+
+import com.lowagie.text.error_messages.MessageLocalization;
 
 /**
  * Time Stamp Authority Client interface implementation using Bouncy Castle org.bouncycastle.tsp package.
@@ -152,15 +154,16 @@ public class TSAClientBouncyCastle implements TSAClient {
     }
 
     /**
-     * Get the MessageDigest. Default algorithm `SHA-1` used as per algorithm used without tsaClient
+     * Get the MessageDigest. Default algorithm `SHA-256` in FIPS mode, `SHA-1` for legacy
      *
-     * @return SHA-1 MessageDigest
+     * @return SHA-256 MessageDigest in FIPS mode, SHA-1 in legacy mode
      * @see com.lowagie.text.pdf.PdfPKCS7#getEncodedPKCS7(byte[], java.util.Calendar, TSAClient, byte[]) (upto 1.3.11)
      * or check status of https://github.com/LibrePDF/OpenPDF/issues/320
      */
     @Override
     public MessageDigest getMessageDigest() throws GeneralSecurityException {
-        return MessageDigest.getInstance(isNotEmpty(digestName) ? digestName : "SHA-1");
+        String defaultAlgorithm = FipsMode.getSignatureHashAlgorithm();
+        return MessageDigest.getInstance(isNotEmpty(digestName) ? digestName : defaultAlgorithm);
     }
 
     /**

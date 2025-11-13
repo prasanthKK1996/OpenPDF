@@ -48,16 +48,6 @@
  */
 package com.lowagie.text.pdf;
 
-import com.lowagie.text.Chunk;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Element;
-import com.lowagie.text.ExceptionConverter;
-import com.lowagie.text.Font;
-import com.lowagie.text.Image;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.Rectangle;
-import com.lowagie.text.error_messages.MessageLocalization;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -74,6 +64,17 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.lowagie.text.Chunk;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.ExceptionConverter;
+import com.lowagie.text.Font;
+import com.lowagie.text.Image;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.error_messages.MessageLocalization;
 
 /**
  * This class takes care of the cryptographic options and appearances that form a signature.
@@ -1381,7 +1382,9 @@ public class PdfSignatureAppearance {
         loc.add(new PdfNumber(0));
         loc.add(new PdfNumber(0));
         reference.put(new PdfName("DigestLocation"), loc);
-        reference.put(new PdfName("DigestMethod"), new PdfName("MD5"));
+        // Use SHA-256 in FIPS mode for digest method
+        String digestMethod = FipsMode.isFipsMode() ? "SHA256" : "MD5";
+        reference.put(new PdfName("DigestMethod"), new PdfName(digestMethod));
         reference.put(PdfName.DATA, writer.reader.getTrailer().get(PdfName.ROOT));
         PdfArray types = new PdfArray();
         types.add(reference);

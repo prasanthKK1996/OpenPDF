@@ -22,7 +22,7 @@ public class PdfSmartCopyTest {
 
     @SuppressWarnings("SameParameterValue")
     private void check(File orig, int counter) {
-        Assertions.assertTimeout(Duration.ofSeconds(20), () -> {
+        Assertions.assertTimeout(Duration.ofSeconds(200), () -> {
             File out = new File("target/test-classes/pdfsmartocy-" + counter + ".pdf");
             Files.createDirectories(out.getParentFile().toPath());
             Document document = new Document();

@@ -46,11 +46,12 @@
  */
 package com.lowagie.text.pdf;
 
-import com.lowagie.text.ExceptionConverter;
 import java.io.ByteArrayOutputStream;
 import java.security.PrivateKey;
 import java.security.cert.CRL;
 import java.security.cert.Certificate;
+
+import com.lowagie.text.ExceptionConverter;
 
 
 /**
@@ -181,7 +182,8 @@ public abstract class PdfSigGenericPKCS extends PdfSignature {
          */
         public VeriSign() {
             super(PdfName.VERISIGN_PPKVS, PdfName.ADBE_PKCS7_DETACHED);
-            hashAlgorithm = "MD5";
+            // Use SHA-256 in FIPS mode for digital signatures
+            hashAlgorithm = FipsMode.getSignatureHashAlgorithm();
             put(PdfName.R, new PdfNumber(65537));
         }
 
@@ -206,7 +208,8 @@ public abstract class PdfSigGenericPKCS extends PdfSignature {
          */
         public PPKLite() {
             super(PdfName.ADOBE_PPKLITE, PdfName.ADBE_X509_RSA_SHA1);
-            hashAlgorithm = "SHA1";
+            // Use SHA-256 in FIPS mode for digital signatures
+            hashAlgorithm = FipsMode.getSignatureHashAlgorithm();
             put(PdfName.R, new PdfNumber(65541));
         }
 
@@ -231,7 +234,8 @@ public abstract class PdfSigGenericPKCS extends PdfSignature {
          */
         public PPKMS() {
             super(PdfName.ADOBE_PPKMS, PdfName.ADBE_PKCS7_SHA1);
-            hashAlgorithm = "SHA1";
+            // Use SHA-256 in FIPS mode for digital signatures
+            hashAlgorithm = FipsMode.getSignatureHashAlgorithm();
         }
 
         /**

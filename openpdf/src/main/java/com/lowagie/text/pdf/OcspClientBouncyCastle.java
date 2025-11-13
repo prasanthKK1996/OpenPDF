@@ -98,8 +98,6 @@ package com.lowagie.text.pdf;
  * https://github.com/LibrePDF/OpenPDF
  */
 
-import com.lowagie.text.ExceptionConverter;
-import com.lowagie.text.error_messages.MessageLocalization;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -114,6 +112,7 @@ import java.security.Security;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Random;
+
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
 import org.bouncycastle.asn1.x509.ExtensionsGenerator;
@@ -128,6 +127,9 @@ import org.bouncycastle.cert.ocsp.SingleResp;
 import org.bouncycastle.operator.DigestCalculatorProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
+
+import com.lowagie.text.ExceptionConverter;
+import com.lowagie.text.error_messages.MessageLocalization;
 
 /**
  * OcspClient implementation using BouncyCastle.
@@ -180,8 +182,8 @@ public class OcspClientBouncyCastle implements OcspClient {
     private static OCSPReq generateOCSPRequest(X509Certificate issuerCert,
             BigInteger serialNumber) throws OCSPException, IOException,
             OperatorCreationException, CertificateEncodingException {
-        // Add provider BC
-        Provider prov = new org.bouncycastle.jce.provider.BouncyCastleProvider();
+        // Add provider BC-FIPS
+        Provider prov = new org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider();
         Security.addProvider(prov);
 
         // Generate the id for the certificate we are looking for
